@@ -1,63 +1,102 @@
 package ru.croc.frpo.Console;
 
-import java.io.File;
-import java.nio.file.Path;
-import java.nio.file.Paths;
+import java.io.IOException;
+import java.nio.file.*;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
- * Данный класс содержит методы для работы с директориями в консоли.
+ * Данный класс содержит статические методы для работы с директориями в консоли.
  * @author Елизавета Охота
  *
  */
 public class DirectoryOpt {
 	
 	/**
-	 * Этот метод создаёт директорию по указанному пути. 
-	 * @param path - Путь к новой директории. Может быть как абсолютный, так и относительный.
-	 * @return Если новая директория создана, возвращает true. Если такая директория уже существует
-	 * и создана не была, возвращает false.
+	 * Метод создаёт директорию с указанным именем в текущей директории.
+	 * @param name - Строка с названием новой папки для сооздания.
+	 * @return 0 - если папка успешно создана.
+	 * 1 - если указано не имя папки, а путь, содержащий несколько директорий
+	 * 2 - если папку невозможно создать, потому что она уже существет
+	 * @throws InvalidPathException
+	 * @throws IOException 
 	 */
-	public boolean mkdir(Path path) {
-		File folder = absPath(path);
+	public static int mkdir(String name) throws InvalidPathException, IOException {
+		/*
+		 * Если название папки состоит из иерархии папок
+		 */
+		if (name.contains("\\")) {
+			return 1;
+		}
+		Path path = Paths.get(name); //throws InvalidPathException
+		Path folder = App.absPath(path);
 		/*
 		 * Если дирекотрия не существует, создаём ее.
 		 */
-		if(!folder.exists()){
-			folder.mkdir();
-			return true;
+		if(!Files.exists(folder)){
+			folder = Files.createDirectory(folder); //throws IOException
+			return 0;
 		} else{
-			return false;
+			return 2;
 		}
 	}
 
 	/**
-	 * Этот метод возвращает массив файлов в директории по указанному пути.
+	 * Этот метод возвращает список файлов в директории по указанному пути.
 	 * @param path - Путь к директории, из которой читаем файлы. Может быть как абсолютный, так и относительный.
-	 * @return Возвращает массив файлов, находящихся в данной директории. Если директория пустая - пустой массив.
+	 * @return Возвращает список файлов, находящихся в данной директории. Если директория пустая - пустой список.
 	 * Если директории не существует - null.
+	 * @throws IOException Во время итерации по файлам директории могут возникнуть ошибки доступа.
+	 * @throws InvalidPathException При превращении строкив путь.
 	 */
-	File[] listFiles(Path path) {
-		File folder = absPath(path);
-		File[] list = folder.listFiles();
-		return list;
+	 static List<Path> listFiles(String pathS) throws IOException, InvalidPathException {
+		Path folder = App.absPath(Paths.get(pathS));
+		/*
+		 * Если указанной директории не существует, возвращаем null
+		 */
+		if (!Files.exists(folder)){
+			return null;
+		}
+	    List<Path> list = new ArrayList<>();
+	    try (DirectoryStream<Path> stream = Files.newDirectoryStream(folder)) {
+		    /*
+		     * Итерация по всем файлам в указанной директории и добавление путей в список
+		     */
+	        for (Path entry: stream) {
+	            list.add(entry);
+	        }
+	    } catch (DirectoryIteratorException ex) {
+	        throw ex.getCause();
+	    }
+	    return list;
+	}
+	
+	/**
+	 * Этот метод возвращает список файлов в корневой директории.
+	 * @return Возвращает список файлов, находящийся в директории.
+	 * @throws IOException 
+	 */
+	static List<Path> listFiles() throws IOException {
+		String path = Paths.get(System.getProperty("user.dir")).toString();
+		return listFiles(path);
 	}
 
 	/**
-	 * Этот метод печатает массив файлов, указывая, директория это, или файл.
+	 * Этот метод печатает список файлов, указывая, директория это, или файл.
 	 * @param list - Массив файлов для печати. Сообщит, если файлы отсутствуют или если директория не существует.
 	 */
-	void printFiles(File[] list){
+	 static void printFiles(List<Path> list){
 		if (list != null){
-			if (list.length == 0){
+			if (list.isEmpty()){
 				System.out.println("В этой директории отсутствуют файлы.");
 			}
-			for (File f : list){
-				if(f.isDirectory()){
+			for (Path path: list){
+				if(Files.isDirectory(path)){
 					System.out.print("Директория: ");
 				} else{
 					System.out.print("Файл:       ");
 				}
-				System.out.println(f.getName());
+				System.out.println(path.getFileName());
 			}
 		} else{
 			/*
@@ -68,40 +107,35 @@ public class DirectoryOpt {
 		}
 	}
 
-	/**
-	 * Этот метод возвращает массив файлов в корневой директории.
-	 * @return Возвращает массив файлов, находящийся в директории.
-	 */
-	File[] listFiles() {
-		Path path = Paths.get(System.getProperty("user.dir"));
-		return listFiles(path);
-	}
+
 	
 	/**
 	 * Распечатывает файлы, располагающиеся в данной директории.
 	 * @param path - Директория, из которой надо печатать файлы.
+	 * @throws IOException 
 	 */
-	public void showFiles(Path path){
+	public static  void showFiles(String path) throws IOException{
 		printFiles(listFiles(path));
 	}
 	
 	/**
-	 * Распечатывает файлы корневой директории.
+	 * Распечатывает файлы текущей директории.
+	 * @throws IOException 
 	 */
-	public void showFiles(){
+	public static  void showFiles() throws IOException{
 		printFiles(listFiles());
 	}
 
 	/**
-	 * Изменяет корневую директорию на заданную.
-	 * @param path - Новая корневая директория. Как абсолютный, так и относительный путь.
+	 * Изменяет текущую директорию на заданную.
+	 * @param path - Новая текущая директория. Как абсолютный, так и относительный путь.
 	 * @return Если директория существует, возвращает true. Иначе false.
+	 * @throws InvalidPathException при превращении строки в путь
 	 */
-	public boolean changeDir(Path path) {
-		File file = absPath(path);
-		Path abs= file.toPath();
-		if (file.exists()){
-			System.setProperty("user.dir", abs.toString());
+	public static boolean changeDir(String path)  throws InvalidPathException {
+		Path dir = App.absPath(Paths.get(path));
+		if (Files.exists(dir)){
+			System.setProperty("user.dir", dir.toString());
 			return true;
 		}
 		else {
@@ -110,15 +144,14 @@ public class DirectoryOpt {
 	}
 
 	/**
-	 * Перемещает корневую директорию на один шаг вверх (к родительской директории).
-	 * @return Возващает true, если корневая директория успешно перемещена.
+	 * Перемещает текущую директорию на один шаг вверх (к родительской директории).
+	 * @return Возващает true, если текущая директория успешно перемещена.
 	 * Возвращает false, если директории выше не существует.
 	 */
-	public boolean goUp() {
+	public static boolean goUp() {
 		Path directory = Paths.get(System.getProperty("user.dir"));
 		Path parent = directory.getParent();
 		if (parent == null) {
-			System.out.println("У текущей директории нет родительской директории.");
 			return false;
 		} else {
 			System.setProperty("user.dir", parent.toString());
@@ -126,21 +159,4 @@ public class DirectoryOpt {
 		}
 	}
 	
-	/**
-	 * Если переданный путь не абсолютный, делает его абсолютным и создаёт новый файл, относящийся к этому пути.
-	 * Если переданный путь абсолютный, просто создаёт относящийся к нему файл.
-	 * @param path - Путь, для которого хотим получить абсолютный.
-	 * @return Возвращает файл, относящийся к полученному абсолютному пути.
-	 */
-	File absPath(Path path){
-		File folder;
-		if (path.isAbsolute()){
-			folder = path.toFile();
-		} else{
-			String s = System.getProperty("user.dir") + "\\" + path.toString();
-			Path abs = Paths.get(s);
-			folder = abs.toFile();
-		}
-		return folder;
-	}
 }

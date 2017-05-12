@@ -1,10 +1,11 @@
 package ru.croc.frpo.Console;
 
-import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
+import java.nio.file.InvalidPathException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.List;
 
 import org.junit.Test;
 
@@ -12,121 +13,145 @@ import junit.framework.TestCase;
 
 public class DirectoryOptTest extends TestCase {
 	
+	private Path absPath(Path path) {
+		if (!path.isAbsolute()){
+			String s = System.getProperty("user.dir") + "\\" + path.toString();
+			path = Paths.get(s);
+		}
+		return path;
+	}
+	public void setUp(){
+		System.setProperty("user.dir.old", System.getProperty("user.dir"));
+	}
+	
+	
 	public void tearDown(){
-	System.setProperty("user.dir", "C:\\Users\\Елизавета\\workspaceJava\\Console");
+		System.setProperty("user.dir", System.getProperty("user.dir.old"));
 	}
 	
-	DirectoryOpt directory = new DirectoryOpt();
+
+	@Test
+	public void testMkdirLong() throws InvalidPathException, IOException{
+		String path = "C:\\Users\\Елизавета\\Desktop\\testing";
+		int code = DirectoryOpt.mkdir(path);
+		assertEquals(1,code);
+	}
+	
 	
 	@Test
-	public void testMkdir(){
-		Path path = Paths.get("C:\\Users\\Елизавета\\Desktop\\testing\\new");
-		directory.mkdir(path);
-		File file = path.toFile();
-		assertTrue(file.exists());
-		assertFalse(file.isFile());
-		if (file.exists()){
-			try {
-				Files.delete(path);
-			} catch (IOException e) {}
+	public void testMkDirExist() throws InvalidPathException, IOException{
+		System.setProperty("user.dir", "C:\\");
+		String path = "Users";
+		assertEquals(2, DirectoryOpt.mkdir(path));
+	}
+	
+	@Test
+	public void testMkdirShort() throws InvalidPathException, IOException{
+		String path = "new";
+		assertEquals(0, DirectoryOpt.mkdir(path));
+		Path p =  absPath(Paths.get(path));
+		assertTrue(Files.exists(p));
+		assertTrue(Files.isDirectory(p));
+		Files.delete(p);
+	}
+	
+	@Test
+	private void textMkdirEx(){
+		String path = "???***";
+		try {
+			DirectoryOpt.mkdir(path);
+		} catch (InvalidPathException e) {
+			assertTrue(true);
+		} catch (IOException e) {
 		}
-	}
-	
-	@Test
-	public void testMkDirExhist(){
-		Path path = Paths.get("C:\\Users");
-		assertFalse(directory.mkdir(path));
-	}
-	
-	@Test
-	public void testMkdirShort(){
-		Path path = Paths.get("new");
-		directory.mkdir(path);
-		File file = path.toFile();
-		assertTrue(file.exists());
-		assertFalse(file.isFile());
-		if (file.exists()){
-			try {
-				Files.delete(path);
-			} catch (IOException e) {}
-		}
+		fail();
 	}
 	
 	@Test 
-	public void testListFiles(){
-		Path path = Paths.get("C:\\Users\\Елизавета\\Downloads");
-		File[] list = directory.listFiles(path);
-		String filename = "C:\\Users\\Елизавета\\Downloads\\Diplom_1.pdf";
-		boolean flag = false;
-//		directory.printFiles(list);
-		for (File f :list){
-			if (f.toString().equals(filename)){
-				flag = true;
+	public void testListFiles() throws InvalidPathException, IOException{
+		String path = System.getProperty("user.dir");
+		DirectoryOpt.mkdir("Папка");
+		Path newFile = absPath(Paths.get(path + "\\Папка\\Файл"));
+		newFile = Files.createFile(newFile);
+		Path newDir = newFile.getParent();
+		List<Path> list;
+		try {
+			list = DirectoryOpt.listFiles(newDir.toString());
+			boolean flag = false;
+			for (Path f :list){
+				if (f.equals(newFile)){
+					flag = true;
+				}
 			}
+			assertTrue(flag);
+			Files.delete(newFile);
+			Files.delete(newDir);
+		} catch (InvalidPathException | IOException e) {
+			fail();
 		}
-		assertTrue(flag);
 	}
 	
 	@Test
-	public void testListFilesVoid(){
-		File[] list = directory.listFiles();
-		String filename = "C:\\Users\\Елизавета\\workspaceJava\\Console\\pom.xml";
+	public void testListFilesVoid() throws IOException{
+		Path path = Paths.get(System.getProperty("user.dir") + "\\Файл");
+		path = Files.createFile(path);
 		boolean flag = false;
-	//	directory.printFiles(list);
-		for (File f :list){
-			if (f.toString().equals(filename)){
+		List<Path> list = DirectoryOpt.listFiles();
+		for (Path f :list){
+			if (f.equals(path)){
 				flag = true;
 			}
 		}
+		Files.delete(path);
 		assertTrue(flag);
 	}
 	
 	@Test 
 	public void testChangeDir(){
-		Path path = Paths.get("C:\\Users\\Елизавета\\Desktop");
-		directory.changeDir(path);
+		String path = "C:\\";
+		DirectoryOpt.changeDir(path);
 		assertEquals(path.toString(), System.getProperty("user.dir"));
 	}
 	
 	@Test
 	public void testChangeDirNoFile(){
-		Path path = Paths.get("Это не те дроиды, которых вы ищете");
-		assertFalse(directory.changeDir(path));
+		String path = "Это не те дроиды, которых вы ищете";
+		assertFalse(DirectoryOpt.changeDir(path));
 	}
 	
 	@Test
-	public void testChangeDirYesFile(){
-		Path path = Paths.get("Это не те дроиды, которых вы ищете");
-		directory.mkdir(path);
-		assertTrue(directory.changeDir(path));
-		File file = path.toFile();
-		if (file.exists()){
+	public void testChangeDirYesFile() throws InvalidPathException, IOException{
+		String path = "Это не те дроиды, которых вы ищете";
+		DirectoryOpt.mkdir(path);
+		assertTrue(DirectoryOpt.changeDir(path));
+		Path p = Paths.get(path);
+		if (Files.exists(p)){
 			try {
-				Files.delete(path);
-			} catch (IOException e) {}
+				Files.delete(p);
+			} catch (IOException e) {
+			}
 		}
 	}
 	
 	@Test 
-	public void testListFilesNE(){
+	public void testListFilesNE() throws IOException{
 		Path path = Paths.get("Это не те дроиды, которых вы ищете");
-		File[] list = directory.listFiles(path.toAbsolutePath());
+		List<Path> list = DirectoryOpt.listFiles(App.absPath(path).toString());
 		assertNull(list);
 	}
 	
 	@Test
 	public void testGoUp(){
-		Path path = Paths.get("C:\\Users\\Елизавета\\Desktop");
-		directory.changeDir(path);
-		directory.goUp();
-		assertEquals(Paths.get("C:\\Users\\Елизавета").toString(), System.getProperty("user.dir"));
+		Path path = Paths.get(System.getProperty("user.dir"));
+		DirectoryOpt.goUp();
+		assertEquals(path.getParent().toString(), System.getProperty("user.dir"));
 	}
 	
 	@Test
 	public void testGoUpRoot(){
-		Path path = Paths.get("C:\\");
-		directory.changeDir(path);
-		assertFalse(directory.goUp());
+		String path = "C:\\";
+		DirectoryOpt.changeDir(path);
+		assertFalse(DirectoryOpt.goUp());
 	}
 
 
