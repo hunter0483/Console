@@ -81,6 +81,7 @@ public class FileOptTest extends TestCase {
 		String secondLine = "Сегодня с вами я, ваш любимый ведущий!";
 		lines.add(firstLine);
 		lines.add(secondLine);
+		Files.createFile(path);
 		FileOpt.appendFile(pathS, lines);
 		int n = 2;
 		List<String> result = FileOpt.readFileLines(pathS, n);
@@ -99,6 +100,7 @@ public class FileOptTest extends TestCase {
 		lines.add("Сегодня с вами я, ваш любимый ведущий!");
 		lines.add("Приём!");
 		lines.add("Жду вас у телеэкранов завтра в 22-00.");
+		Files.createFile(path);
 		FileOpt.appendFile(pathS, lines);
 		int n = 2;
 		List<String> result = FileOpt.readFileLines(pathS, n);

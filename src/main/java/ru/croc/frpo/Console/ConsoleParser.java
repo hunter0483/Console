@@ -33,8 +33,8 @@ public class ConsoleParser {
 		 */
 		Pattern number = Pattern.compile("[0-9]+");
 		Matcher match = number.matcher(string);
-		match.find();
-		if (match.start() != 0){
+		boolean found = match.find();
+		if (!found || match.start() != 0){
 			System.out.println("Вы ввели недопустимую команду. После команды show должно следовать число.");
 			return;
 		}
@@ -54,7 +54,6 @@ public class ConsoleParser {
 		 * Печатаем метододом printFileLines первые n строк файла.
 		 */
 		string = string.substring(1);
-		System.out.println("Первые " + n + " строк файла " + string + ";");
 		FileOpt.printFileLines(string, n);
 	}
 	
@@ -109,8 +108,15 @@ public class ConsoleParser {
 	 */
 	public static void parseCreateCommand(String command) throws IOException{
 		String pathS = command.substring(7);
-		FileOpt.newFile(pathS);
-		System.out.println("В текущей директории создан новый файл "+ pathS);
+		int code = FileOpt.newFile(pathS);
+		if (code == 0 ){
+			System.out.println("В текущей директории создан новый файл "+ pathS);
+		} else if (code == 1){
+			System.out.println("Можно создать файл только в текущей папке.");
+		} else {
+			System.out.println("Файл " +pathS + "  уже существует.");
+		}
+		
 	}
 	
 	/**
@@ -120,7 +126,7 @@ public class ConsoleParser {
 	 * @param scan - Сканнер, откуда считываются данные для добавления в файл.
 	 * @throws IOException
 	 */
-	public static void parseAppendCommand(String command, Scanner scan) throws IOException{
+	public static List<String> parseAppendCommand(String command, Scanner scan) throws IOException{
 		/*
 		 * Отделяем путь к файлу от команды.
 		 */
@@ -132,17 +138,24 @@ public class ConsoleParser {
 		boolean exitAppend = false;
 		List<String> lines = new ArrayList<>();
 		while (!exitAppend){
-			String line = scan.nextLine();
-			if (!line.equals("exitAppend")){
-				lines.add(line);
+			if (scan.hasNext()){
+				String line = scan.nextLine();
+				if (!line.equals("exitAppend")){
+					lines.add(line);
+				} else {
+					exitAppend = true;
+					
+				}
 			} else {
-				exitAppend = true;
+				break;
 			}
+
 		}
 		/*
 		 * Записываем список строк в файл.
 		 */
 		FileOpt.appendFile(pathS, lines);
 		System.out.println("В файл " + pathS +  "  успешно добавлены строки.");
+		return lines;
 	}
 }

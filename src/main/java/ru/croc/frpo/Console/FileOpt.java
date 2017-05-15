@@ -5,6 +5,7 @@ import java.nio.file.Files;
 import java.nio.file.InvalidPathException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.nio.file.StandardOpenOption;
 import java.util.List;
 
 /**
@@ -41,12 +42,13 @@ public class FileOpt {
 			file = Files.createFile(file); //throws IOException
 			return 0;
 		} else {
-			return 2; //Если директория уже существует
+			return 2; //Если файл уже существует
 		}
 	}
 	
 	/**
 	 * Метод добавляет в файл с заданным именем список строк.
+	 * Если файла не существует, создаёт его.
 	 * @param name Имя файла, в который надо добавить строки.
 	 * @param lines Строки, которые надо добавить в файл
 	 * @throws IOException 
@@ -57,7 +59,18 @@ public class FileOpt {
 		/*
 		 * Если файл, в который хотим добавить строки, не существует, создаём его.
 		 */
-		Files.write(file, lines); //throws IOException
+		if (!Files.exists(file)){
+			Files.createFile(file);
+		}
+		for (int i = 0; i<lines.size(); i++){
+			String line = lines.get(i);
+			if ( i != lines.size()-1){
+				Files.write(file, (line + System.lineSeparator()).getBytes("UTF-8"), StandardOpenOption.APPEND);
+			} else{
+				Files.write(file, line.getBytes("UTF-8"), StandardOpenOption.APPEND);
+			}
+			
+		}
 	}
 
 	

@@ -47,9 +47,10 @@ public class DirectoryOptTest extends TestCase {
 	
 	@Test
 	public void testMkdirShort() throws InvalidPathException, IOException{
-		String path = "new";
-		assertEquals(0, DirectoryOpt.mkdir(path));
+		String path = "newdir";
 		Path p =  absPath(Paths.get(path));
+		Files.deleteIfExists(p);
+		assertEquals(0, DirectoryOpt.mkdir(path));
 		assertTrue(Files.exists(p));
 		assertTrue(Files.isDirectory(p));
 		Files.delete(p);

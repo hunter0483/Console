@@ -25,32 +25,7 @@ public class App {
     public static void main( String[] args ) {
 
     	LocalDateTime date = LocalDateTime.now();
-    	int hour = date.getHour();
-    	String hello = null;
-    	if (hour > 5 && hour < 12 ){
-    		hello = "Доброе утро!";
-    	} else if (hour > 11 && hour < 18){
-    		hello = "Добрый день!";
-    	} else if (hour > 17 ){
-    		hello = "Добрый вечер!";
-    	} else if (hour < 6){
-    		hello = "Доброй ночи!";
-    	}
     	String beginDirectory = System.getProperty("user.dir");
-    	System.out.println( hello +" Вас приветствует консоль. \n\n"
-    			+ "'cd  (<абсолютный путь>|<относительный путь>)'  - перейти в директорию.\n\n"
-    			+ "'ls [(<абсолютный путь>|<относительный путь>)]' - вывод содержимого директории.\n "
-    			+ "При вводе без параметров показывает содержимое текущей директории. \n\n"
-    			+ "'..' - переход на одну директорию выше.\n\n"
-    			+ "'mkdir (<имя директории>)' - создать новую директорию в текущей директории.\n\n"
-    			+ "'create <имя файла>'  -  создать в текущей директории файл с данным именем. \n\n"
-    			+ "'append (<абсолютный путь>|<относительный путь>)' - добавить информацию в файл.\n"
-    			+ "После вызова этой команды пользователю предлагается ввести текст, который он хочет добавить в файл.\n"
-    			+ "Для завершения ввода текста в файл требуется ввести команду 'exitAppend'\n\n"
-    			+ "'show <число строк> (<абсолютный путь>|<относительный путь>)' - показать заданное количество строк у выбранного файла. \n\n"
-    			+ "'exit' - выход из консоли.\n\n");
-
-
     	/*
     	 * Определяем систему, в которй запускаем через консоль программу.
     	 * Если программа запущена на Windows, изменяет кодировку на cp866 (кодировка консоли Windows).
@@ -63,7 +38,7 @@ public class App {
     	} else {
     		encoding = "UTF-8";
     	}
-	 	Scanner scan = new Scanner(System.in, encoding);
+        Scanner scan = new Scanner(System.in, encoding);
 //    	Scanner scan = new Scanner(System.in); //Эта строка для компиляции в среде
     	/*
     	 * Если в качестве агрумента командно строки подан аргумент, значит считывать команды будем
@@ -88,10 +63,10 @@ public class App {
 			try {
 				Path p = absPath(Paths.get(fileCommands));
 				if (Files.notExists(p)){
-					System.out.println("Файл с командами не найден. Программа завершает работу.");
-					scan.close();
-					return;
-				}
+						System.out.println("Файл с командами не найден. Программа завершает работу.");
+						scan.close();
+						return;
+					}
 				scanCommands = new Scanner(Files.newInputStream(p),"UTF-8");
 			} catch (InvalidPathException e){
 				System.out.println("Вы ввели недопустимый путь. Программа завершает работу.");
@@ -101,9 +76,10 @@ public class App {
 				System.out.println("Произошла ошибка считывания файла. Программа завершает работу.");
 			}
 		/*
-//		 * Если считываем с клавиатуры, то Scanner менять не надо.
+		 * Если считываем с клавиатуры, то Scanner менять не надо.
 		 */
-		} else if (option.equals("realtime")){  
+		} else if (option.equals("realtime")){ 
+			sayHello(date);
 			scanCommands = scan;
 		/*
 		 * Если введена недопустимая команда,
@@ -131,7 +107,7 @@ public class App {
 		       	}
 				Files.createFile(file);
 				Files.write(file, commands);
-				System.out.println("Файл с выполненными командами\n " + file.toString() + "\nбыл успешно создан.");
+				System.out.println("Файл с выполненными командами\n" + file.toString() + "\nбыл успешно создан.");
 			} catch (IOException e) {
 				System.out.println("К сожалению, файл с коммандами не был сохранён, произошла ошибка записи.");
 			}	    	
@@ -139,7 +115,46 @@ public class App {
 	    scan.close();
 	    scanCommands.close();
 	}
-
+    
+    /**
+     * Этот метод выводит в консоль приветствие и команды, которые принимает на вход консоль. 
+     * Кроме того, выводится описание работы команд и возможные нюансы работы с ними.
+     * @param date - Время, для которого нужно вывести приветствие.
+     * В зависимости от времени суток метод печатает разные приветствия.
+     * 06.00-11.59 - "Доброе утро!"
+     * 12.00-17.59 - "Добрый день!"
+     * 18.00-23.59 - "Добрый вечер!"
+     * 00.00-05.59 - "Доброй ночи!"
+     */
+    public static void sayHello(LocalDateTime date){
+    	int hour = date.getHour();
+    	String hello = null;
+    	if (hour > 5 && hour < 12 ){
+    		hello = "Доброе утро!";
+    	} else if (hour > 11 && hour < 18){
+    		hello = "Добрый день!";
+    	} else if (hour > 17 ){
+    		hello = "Добрый вечер!";
+    	} else if (hour < 6){
+    		hello = "Доброй ночи!";
+    	}
+    	System.out.println( hello +" Вас приветствует консоль. \n\n"
+    			+ "'cd  (<абсолютный путь>|<относительный путь>)'  - перейти в директорию.\n\n"
+    			+ "'ls [(<абсолютный путь>|<относительный путь>)]' - вывод содержимого директории.\n "
+    			+ "При вводе без параметров показывает содержимое текущей директории. \n\n"
+    			+ "'..' - переход на одну директорию выше.\n\n"
+    			+ "'mkdir <имя директории>' - создать новую директорию в текущей директории.\n\n"
+    			+ "'create <имя файла>'  -  создать в текущей директории файл с данным именем. \n\n"
+    			+ "'append (<абсолютный путь>|<относительный путь>)' - добавить информацию в файл.\n"
+    			+ "После вызова этой команды пользователю предлагается ввести текст, который он\n"
+    			+ "хочет добавить в файл.Для завершения ввода текста в файл требуется ввести \n"
+    			+ "команду 'exitAppend'\n\n"
+    			+ "'show <число строк> (<абсолютный путь>|<относительный путь>)' - показать заданное\n"
+    			+ "количество строк у выбранного файла. Консоль может читать текстовые файлы\n"
+    			+ "в кодировке UTF-8. Если кодировка будет другая, консоль сообщит об ошибке доступа.\n\n"
+    			+ "'exit' - выход из консоли.\n\n");
+    }
+    
 	/**
 	 * Если переданный путь не абсолютный, метод делает его абсолютным.
 	 * Если переданный путь абсолютный, не изменяет его.
@@ -213,7 +228,7 @@ public class App {
             		 * Команда показать файлы по указанному пути.
             		 */
             		if (command.length()>3 && command.substring(0, 2).equals("ls")){ 
-            			ConsoleParser.parseCdCommand(command);
+            			ConsoleParser.parseLsCommand(command);
             			break;
             		} 
               		/*
@@ -234,7 +249,11 @@ public class App {
             		 * Команда добавить строки в файл
             		 */
             		else if (command.length()>7 && command.substring(0, 6).equals("append")){
-            			ConsoleParser.parseAppendCommand(command, scan);
+            			List<String> lines = ConsoleParser.parseAppendCommand(command, scan);
+            			for (String line : lines){
+                			commands.add(line);
+            			}
+            			commands.add("exitAppend");
             			break;
             		}
             		/*
